@@ -5,6 +5,7 @@ Firebase functions for TuneIQ
 
 1. Set up admin sdk
 - follow "To set the environment variable:" - https://firebase.google.com/docs/admin/setup#windows
+- will need to set the env variable each terminal session - pretty lame
 
 2. Get the environment config from firebase
 -  run this command in the functions folder: firebase functions:config:get | ac .runtimeconfig.json (for powershell)
