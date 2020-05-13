@@ -1,22 +1,27 @@
 {
   "name": "functions",
+  "main": "lib/index.js",
   "description": "Cloud Functions for Firebase",
   "scripts": {
-    "lint": "eslint .",
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "build": "./node_modules/.bin/tslint --project tsconfig.json && tsc"
   },
   "engines": {
     "node": "8"
   },
   "dependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/js-base64": "^2.3.1",
     "axios": "^0.19.2",
-    "btoa": "^1.2.1",
     "firebase-admin": "^8.10.0",
-    "firebase-functions": "^3.6.0"
+    "firebase-functions": "^3.6.0",
+    "js-base64": "^2.5.2",
+    "tslint": "^6.1.2",
+    "typescript": "^3.8.3"
   },
   "devDependencies": {
     "eslint": "^5.12.0",
