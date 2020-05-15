@@ -1,0 +1,11 @@
+steps:
+- name: node:8
+  entrypoint: npm
+  args: ['build']
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - functions
+  - deploy
+  - generateGameContent
+  - --source=./functions
+  - --trigger-http
