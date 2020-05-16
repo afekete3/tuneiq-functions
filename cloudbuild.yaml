@@ -1,8 +1,3 @@
 steps:
-- name: 'gcr.io/cloud-builders/gcloud'
-  args:
-  - functions
-  - deploy
-  - generateGameContent
-  - --source=./functions
-  - --trigger-http
+- name: 'gcr.io/tuneiq/firebase'
+  args: ['deploy', '--project=tuneiq, '--only=functions']
