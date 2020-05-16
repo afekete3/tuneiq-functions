@@ -9,7 +9,7 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "gcp-build": "tsc -p .",
-    "build": "./node_modules/.bin/tslint --project tsconfig.json && tsc"
+    "build": "npm install && tslint --project tsconfig.json && tsc"
   },
   "engines": {
     "node": "8"
