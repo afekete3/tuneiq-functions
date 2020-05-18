@@ -64,6 +64,7 @@ node_modules/
 # dotenv environment variables file
 .env
 
+# keys and other files to be ignored
 spotify_keys.json
-
 .runtimeconfig.json
+.tuneiq-firebase-adminsdk-key.json
