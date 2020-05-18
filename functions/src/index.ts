@@ -1,6 +1,8 @@
-import * as base64 from 'js-base64'
-import * as functions from 'firebase-functions'
-import * as axios from 'axios'
+import * as base64 from 'js-base64';
+import * as functions from 'firebase-functions';
+import * as axios from 'axios';
+import { getFirebaseApp } from './firebase';
+
 const cors = require('cors')({ origin: true });
 
 // Types -- TODO: find a better place to put these
@@ -50,7 +52,6 @@ export type SpotifyTrack = {
     uri: string,
 }
 
-
 exports.generateGameContent = functions.https.onRequest((request, response) => {
     return cors(request, response, () => {
         const gameGenre: string = String(request.query.genre);
@@ -85,6 +86,56 @@ exports.generateGameContent = functions.https.onRequest((request, response) => {
             response.send(error);
             return Promise.reject(error);
         })
+    })
+})
+
+exports.deleteStaleGames = functions.https.onRequest((request, response) => {
+    const hoursAgo: number = Number(request.body.hoursAgo);
+    // allowing to pass in minutes may be too powerful for accidental deletes
+    // maybe we can pass an additional param so that when we use it, it's deliberate
+    const minutesAgo: number = Number(request.body.minutesAgo);
+
+    // don't allow both to be 0 or NaN
+    if (!hoursAgo && !minutesAgo) {
+        console.log("no parameters passed, not deleting anything");
+        response.send({"error": "no parameters passed, not deleting anything"});
+        return 1;
+    }
+
+    // if hoursAgo is not passed in, dont delete based on minutesAgo
+    // in order to delete using minutesAgo, pass in {hoursAgo: 0}
+    if (isNaN(hoursAgo) && minutesAgo) {
+        console.log("warning: in order to delete using minutesAgo, pass in {hoursAgo: 0}");
+        response.send({"error": "!WARNING! in order to delete using minutesAgo, pass in {hoursAgo: 0}. Make sure you know what you're doing if you do this"});
+        return 1;
+    }
+
+    const date: Date = new Date();
+    const expiryTime: number = date.setMinutes(date.getMinutes() - hoursAgo);
+    
+    console.log("deleting all games started before:", new Date(expiryTime));
+
+    const Firebase = getFirebaseApp();
+
+    return cors(request, response, () => {
+        Firebase.firestore().collection("games")
+            .where("startTime", "<=", expiryTime)
+            .get()
+            .then(games => {
+                const gamesToDelete = games.docs.length;
+                console.log(`found ${gamesToDelete} games to delete`);
+                if (!games.empty) {
+                    //TODO delete games
+                }
+
+                response.send({"gamesDeleted": gamesToDelete});
+                return 0;
+            })
+            .catch(error => {
+                console.log(error);
+                response.send({"error": error});
+                return 1;
+            });
     })
 })
 
@@ -223,5 +274,3 @@ function getSpotifyTracks(gameGenre: string, gameRounds: number, access_token: s
         return Promise.reject(error);
     })
 }
-
-
