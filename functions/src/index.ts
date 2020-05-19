@@ -90,10 +90,10 @@ exports.generateGameContent = functions.https.onRequest((request, response) => {
 })
 
 exports.deleteStaleGames = functions.https.onRequest((request, response) => {
-    const hoursAgo: number = Number(request.body.hoursAgo);
+    const hoursAgo: number = Number(request.query.hoursAgo);
     // allowing to pass in minutes may be too powerful for accidental deletes
     // maybe we can pass an additional param so that when we use it, it's deliberate
-    const minutesAgo: number = Number(request.body.minutesAgo);
+    const minutesAgo: number = Number(request.query.minutesAgo);
 
     // don't allow both to be 0 or NaN
     if (!hoursAgo && !minutesAgo) {
