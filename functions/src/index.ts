@@ -20,7 +20,7 @@ export type GameTrack = {
 
 export type GameDetails = {
     name: string,
-    password: string,
+    gameCode: string,
     hostId: string,
     intermissionDuration: number,
     roundDuration: number,
@@ -58,7 +58,7 @@ exports.generateGameContent = functions.https.onRequest((request, response) => {
         const hostId: string = String(request.query.hostId);
         const hostName: string = String(request.query.hostName);
         const gameName: string = String(request.query.name);
-        const password: string = String(request.query.password);
+        const gameCode: string = String(request.query.gameCode);
         const gameRounds: number = Number(functions.config().gameconfig.number_of_rounds);
         const optionsPerRound: number = Number(functions.config().gameconfig.number_of_options);
 
@@ -66,7 +66,7 @@ exports.generateGameContent = functions.https.onRequest((request, response) => {
             const gameDetails: GameDetails = {
                 hostId: hostId,
                 name: gameName,
-                password: password,
+                gameCode: gameCode,
                 genre: gameGenre,
                 rounds: roundDetails,
                 intermissionDuration: NaN,
