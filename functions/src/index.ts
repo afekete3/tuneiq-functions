@@ -89,52 +89,71 @@ exports.generateGameContent = functions.https.onRequest((request, response) => {
     })
 })
 
-exports.deleteStaleGames = functions.https.onRequest((request, response) => {
+exports.deleteStaleGames = functions.https.onRequest(async (request, response) => {
     const hoursAgo: number = Number(request.query.hoursAgo);
-    // allowing to pass in minutes may be too powerful for accidental deletes
-    // maybe we can pass an additional param so that when we use it, it's deliberate
-    const minutesAgo: number = Number(request.query.minutesAgo);
 
     // don't allow both to be 0 or NaN
-    if (!hoursAgo && !minutesAgo) {
-        console.log("no parameters passed, not deleting anything");
-        response.send({"error": "no parameters passed, not deleting anything"});
-        return 1;
-    }
-
-    // if hoursAgo is not passed in, dont delete based on minutesAgo
-    // in order to delete using minutesAgo, pass in {hoursAgo: 0}
-    if (isNaN(hoursAgo) && minutesAgo) {
-        console.log("warning: in order to delete using minutesAgo, pass in {hoursAgo: 0}");
-        response.send({"error": "!WARNING! in order to delete using minutesAgo, pass in {hoursAgo: 0}. Make sure you know what you're doing if you do this"});
-        return 1;
+    if (!hoursAgo || isNaN(hoursAgo)) {
+        console.log("parameter hoursAgo not passed in, not deleting anything");
+        response.send({"error": "parameter hoursAgo passed, not deleting anything"});
+        return -1;
     }
 
     const date: Date = new Date();
-    const expiryTime: number = date.setMinutes(date.getMinutes() - hoursAgo);
-    
+    const expiryTime: number = date.setHours(date.getHours() - hoursAgo);
+
     console.log("deleting all games started before:", new Date(expiryTime));
 
     const Firebase = getFirebaseApp();
 
     return cors(request, response, () => {
         Firebase.firestore().collection("games")
-            .where("startTime", "<=", expiryTime)
+            .where("startTime", ">=", expiryTime)
             .get()
-            .then(games => {
+            .then((games) => {
                 const gamesToDelete = games.docs.length;
                 console.log(`found ${gamesToDelete} games to delete`);
                 if (!games.empty) {
-                    //TODO delete games
+                    let gamesDeleted: number = 0;
+                    const failedToDelete: Array<Object> = [];
+                    const promises: Array<Promise<Object>> = [];
+
+                    games.forEach((game) => {
+                        promises.push(new Promise((resolve) => {
+                            Firebase.firestore().collection("games")
+                                .doc(game.id)
+                                .delete()
+                                .then(() => {
+                                    console.log(`Deleted document: ${game.id} successfully`);
+                                    gamesDeleted++;
+                                    resolve({ "id": game.id, "deleted": true});
+                                }).catch((err) => {
+                                    console.log(`Error deleting game: ${game.id}`, err);
+                                    failedToDelete.push({ "id": game.id, "error": err});
+                                    resolve({ "id": game.id, "deleted": false});
+                                });
+                            })
+                        );
+                    });
+                    
+                    Promise.all(promises).then((values) => {
+                        console.log(values);
+                        response.send({"gamesDeleted": gamesDeleted, "errors": failedToDelete});
+                    }).catch((err) => {
+                        console.log("Failed to resolve deletion promises");
+                        response.send({ "error": err});
+                    });
+
+                    return 0
                 }
 
-                response.send({"gamesDeleted": gamesToDelete});
+                response.send({ "message": "No games to delete"});
                 return 0;
             })
             .catch(error => {
                 console.log(error);
                 response.send({"error": error});
-                return 1;
+                return -1;
             });
     })
 })
