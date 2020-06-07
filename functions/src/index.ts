@@ -89,7 +89,7 @@ exports.generateGameContent = functions.https.onRequest((request, response) => {
     })
 })
 
-exports.deleteStaleGames = functions.https.onRequest(async (request, response) => {
+exports.deleteStaleGames = functions.https.onRequest((request, response) => {
     const hoursAgo: number = Number(request.query.hoursAgo);
 
     // don't allow both to be 0 or NaN
@@ -108,7 +108,7 @@ exports.deleteStaleGames = functions.https.onRequest(async (request, response) =
 
     return cors(request, response, () => {
         Firebase.firestore().collection("games")
-            .where("startTime", ">=", expiryTime)
+            .where("startTime", "<=", expiryTime)
             .get()
             .then((games) => {
                 const gamesToDelete = games.docs.length;
@@ -137,11 +137,9 @@ exports.deleteStaleGames = functions.https.onRequest(async (request, response) =
                     });
                     
                     Promise.all(promises).then((values) => {
-                        console.log(values);
-                        response.send({"gamesDeleted": gamesDeleted, "errors": failedToDelete});
+                        response.send({ "gamesDeleted": gamesDeleted, "errors": failedToDelete });
                     }).catch((err) => {
-                        console.log("Failed to resolve deletion promises");
-                        response.send({ "error": err});
+                        response.send({ "error": err });
                     });
 
                     return 0
